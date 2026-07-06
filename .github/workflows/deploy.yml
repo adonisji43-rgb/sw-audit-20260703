@@ -25,10 +25,22 @@ jobs:
       - name: 저장소 코드 가져오기
         uses: actions/checkout@v4
 
-      - name: 배포용 폴더 준비 (sw_audit_demo.html -> index.html로 자동 변환)
+      - name: 배포용 폴더 준비 (루트의 html 파일을 자동으로 찾아 index.html로 변환)
         run: |
           mkdir -p site
-          cp sw_audit_demo.html site/index.html
+          shopt -s nullglob
+          files=(*.html)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::저장소 루트에 .html 파일이 없습니다. 업로드가 잘 되었는지 확인해주세요."
+            exit 1
+          fi
+          if [ ${#files[@]} -gt 1 ]; then
+            echo "::error::저장소 루트에 .html 파일이 ${#files[@]}개 있습니다: ${files[*]}"
+            echo "::error::예전 버전 파일이 남아있을 수 있어요. 오래된 파일을 삭제하고 최신 파일 하나만 남겨주세요."
+            exit 1
+          fi
+          echo "배포 대상 파일: ${files[0]}"
+          cp "${files[0]}" site/index.html
 
       - name: Pages 설정
         uses: actions/configure-pages@v5
