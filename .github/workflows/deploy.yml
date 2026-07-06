@@ -1,0 +1,43 @@
+name: Deploy SW Audit Demo to GitHub Pages
+
+# main 브랜치에 뭔가 올라올 때마다 자동으로 실행됩니다.
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:  # Actions 탭에서 수동으로도 실행 가능
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 저장소 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 배포용 폴더 준비 (sw_audit_demo.html -> index.html로 자동 변환)
+        run: |
+          mkdir -p site
+          cp sw_audit_demo.html site/index.html
+
+      - name: Pages 설정
+        uses: actions/configure-pages@v5
+
+      - name: 배포 아티팩트 업로드
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./site
+
+      - name: GitHub Pages에 배포
+        id: deployment
+        uses: actions/deploy-pages@v4
